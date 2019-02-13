@@ -17,10 +17,11 @@ import (
 )
 
 const (
-	resourceName           = "nvidia.com/gpu"
-	serverSock             = pluginapi.DevicePluginPath + "nvidia.sock"
-	envDisableHealthChecks = "DP_DISABLE_HEALTHCHECKS"
-	allHealthChecks        = "xids"
+	serverSock                        = pluginapi.DevicePluginPath + "nvidia.sock"
+	envDisableHealthChecks            = "DP_DISABLE_HEALTHCHECKS"
+	envExtendedResourceName           = "DP_EXTENDED_RESOURCE_NAME"
+	envExtendedResourceValuePerDevice = "DP_EXTENDED_RESOURCE_VALUE_PER_DEVICE"
+	allHealthChecks                   = "xids"
 )
 
 // NvidiaDevicePlugin implements the Kubernetes device plugin API
@@ -154,15 +155,22 @@ func (m *NvidiaDevicePlugin) Allocate(ctx context.Context, reqs *pluginapi.Alloc
 	devs := m.devs
 	responses := pluginapi.AllocateResponse{}
 	for _, req := range reqs.ContainerRequests {
+		realDeviceIDs := make([]string, len(req.DevicesIDs))
+		for idx, fakeID := range req.DevicesIDs {
+			realDeviceIDs[idx] = extractRealDeviceID(fakeID)
+		}
 		response := pluginapi.ContainerAllocateResponse{
 			Envs: map[string]string{
-				"NVIDIA_VISIBLE_DEVICES": strings.Join(req.DevicesIDs, ","),
+				"NVIDIA_VISIBLE_DEVICES": strings.Join(realDeviceIDs, ","),
 			},
 		}
+		log.Println("! Try to allocate devices", realDeviceIDs)
 
 		for _, id := range req.DevicesIDs {
 			if !deviceExists(devs, id) {
-				return nil, fmt.Errorf("invalid allocation request: unknown device: %s", id)
+				err := fmt.Errorf("invalid allocation request: unknown device: %s", id)
+				fmt.Printf("device does not exist: %v", err)
+				return nil, err
 			}
 		}
 
@@ -218,7 +226,7 @@ func (m *NvidiaDevicePlugin) Serve() error {
 	}
 	log.Println("Starting to serve on", m.socket)
 
-	err = m.Register(pluginapi.KubeletSocket, resourceName)
+	err = m.Register(pluginapi.KubeletSocket, os.Getenv(envExtendedResourceName))
 	if err != nil {
 		log.Printf("Could not register device plugin: %s", err)
 		m.Stop()

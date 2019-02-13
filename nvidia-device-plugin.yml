@@ -21,12 +21,25 @@ spec:
       # This, along with the annotation above marks this pod as a critical add-on.
       - key: CriticalAddonsOnly
         operator: Exists
-      - key: nvidia.com/gpu
+      - key: example.com/gpu-utilization
         operator: Exists
         effect: NoSchedule
       containers:
-      - image: nvidia/k8s-device-plugin:1.11
+      - image: dfkozlov/k8s-device-plugin:1.0
         name: nvidia-device-plugin-ctr
+        imagePullPolicy: Always
+        env:
+          - name: DP_EXTENDED_RESOURCE_NAME
+            value: 'example.com/gpu-utilization'
+          - name: DP_EXTENDED_RESOURCE_VALUE_PER_DEVICE
+            value: '100'
+        resources:
+          requests:
+            cpu: 50m
+            memory: 50Mi
+          limits:
+            cpu: 50m
+            memory: 50Mi
         securityContext:
           allowPrivilegeEscalation: false
           capabilities:
