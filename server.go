@@ -17,7 +17,6 @@ import (
 )
 
 const (
-	serverSock                        = pluginapi.DevicePluginPath + "nvidia.sock"
 	envDisableHealthChecks            = "DP_DISABLE_HEALTHCHECKS"
 	envExtendedResourceName           = "DP_EXTENDED_RESOURCE_NAME"
 	envExtendedResourceValuePerDevice = "DP_EXTENDED_RESOURCE_VALUE_PER_DEVICE"
@@ -39,7 +38,7 @@ type NvidiaDevicePlugin struct {
 func NewNvidiaDevicePlugin() *NvidiaDevicePlugin {
 	return &NvidiaDevicePlugin{
 		devs:   getDevices(),
-		socket: serverSock,
+		socket: pluginapi.DevicePluginPath + "nvidia-" + strings.Replace(os.Getenv(envExtendedResourceName), "/", ".", -1) + ".sock",
 
 		stop:   make(chan interface{}),
 		health: make(chan *pluginapi.Device),
