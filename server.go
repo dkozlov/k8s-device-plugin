@@ -38,7 +38,7 @@ type NvidiaDevicePlugin struct {
 func NewNvidiaDevicePlugin() *NvidiaDevicePlugin {
 	return &NvidiaDevicePlugin{
 		devs:   getDevices(),
-		socket: pluginapi.DevicePluginPath + "nvidia-" + strings.Replace(os.Getenv(envExtendedResourceName), "/", ".", -1) + ".sock",
+		socket: fmt.Sprintf("%s-%d.sock", pluginapi.DevicePluginPath + "nvidia-" + strings.Replace(os.Getenv(envExtendedResourceName), "/", ".", -1), time.Now().Unix()),
 
 		stop:   make(chan interface{}),
 		health: make(chan *pluginapi.Device),
