@@ -160,7 +160,7 @@ func (m *NvidiaDevicePlugin) Allocate(ctx context.Context, reqs *pluginapi.Alloc
 		}
 		response := pluginapi.ContainerAllocateResponse{
 			Envs: map[string]string{
-				"NVIDIA_VISIBLE_DEVICES": strings.Join(realDeviceIDs, ","),
+				"NVIDIA_VISIBLE_DEVICES": "all", // workaround for https://github.com/NVIDIA/k8s-device-plugin/issues/98
 			},
 		}
 		log.Println("! Try to allocate devices", realDeviceIDs)
